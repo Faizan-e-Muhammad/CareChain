@@ -19,28 +19,28 @@ import static com.example.contract.IssueContract.IOU_CONTRACT_ID;
 import static net.corda.core.contracts.ContractsDSL.requireThat;
 
 /**
- * This flow allows two parties (the [Initiator] and the [Acceptor]) to come to an agreement about the IOU encapsulated
- * within an [IOUState].
- *
- * In our simple example, the [Acceptor] always accepts a valid IOU.
- *
- * These flows have deliberately been implemented by using only the call() method for ease of understanding. In
- * practice we would recommend splitting up the various stages of the flow into sub-routines.
- *
  * All methods called within the [FlowLogic] sub-class need to be annotated with the @Suspendable annotation.
  */
-public class ExampleFlow {
+public class IssueFlow {
     @InitiatingFlow
     @StartableByRPC
     public static class Initiator extends FlowLogic<SignedTransaction> {
 
         private final String iouName;
+        private final int iouAge;
+        private final String iouGender;
+        private final int iouHeight;
+        private final int iouWeight;
+        private final String iouBloodGroup;
+        private final String iouDiagnosis;
+        private final String iouMedicine;
         private final Party otherParty;
 
         private final Step GENERATING_TRANSACTION = new Step("Generating transaction based on new IOU.");
         private final Step VERIFYING_TRANSACTION = new Step("Verifying contract constraints.");
         private final Step SIGNING_TRANSACTION = new Step("Signing transaction with our private key.");
         private final Step GATHERING_SIGS = new Step("Gathering the counterparty's signature.") {
+
             @Override
             public ProgressTracker childProgressTracker() {
                 return CollectSignaturesFlow.Companion.tracker();
@@ -64,8 +64,15 @@ public class ExampleFlow {
                 FINALISING_TRANSACTION
         );
 
-        public Initiator(String iouName, Party otherParty) {
+        public Initiator(String iouName, int iouAge, String iouGender, int iouHeight, int iouWeight, String iouBloodGroup, String iouDiagnosis, String iouMedicine, Party otherParty) {
             this.iouName = iouName;
+            this.iouAge = iouAge;
+            this.iouGender = iouGender;
+            this.iouHeight = iouHeight;
+            this.iouWeight = iouWeight;
+            this.iouBloodGroup = iouBloodGroup;
+            this.iouDiagnosis = iouDiagnosis;
+            this.iouMedicine = iouMedicine;
             this.otherParty = otherParty;
         }
 
@@ -87,10 +94,10 @@ public class ExampleFlow {
             progressTracker.setCurrentStep(GENERATING_TRANSACTION);
             // Generate an unsigned transaction.
             Party me = getOurIdentity();
-            IOUState iouState = new IOUState(iouName, me, otherParty, new UniqueIdentifier());
+            IOUState iouState = new IOUState(me, otherParty, iouName, iouAge, iouGender, iouHeight, iouWeight, iouBloodGroup, iouDiagnosis, iouMedicine, new UniqueIdentifier());
             final Command<IssueContract.Commands.Create> txCommand = new Command<>(
                     new IssueContract.Commands.Create(),
-                    ImmutableList.of(iouState.getLender().getOwningKey(), iouState.getBorrower().getOwningKey()));
+                    ImmutableList.of(iouState.getHospital().getOwningKey(), iouState.getPatient().getOwningKey()));
             final TransactionBuilder txBuilder = new TransactionBuilder(notary)
                     .addOutputState(iouState, IOU_CONTRACT_ID)
                     .addCommand(txCommand);
@@ -142,7 +149,13 @@ public class ExampleFlow {
                         ContractState output = stx.getTx().getOutputs().get(0).getData();
                         require.using("This must be an IOU transaction.", output instanceof IOUState);
                         IOUState iou = (IOUState) output;
-                        require.using("I won't accept IOUs with a name that is missing or has wrong format.", iou.getName() != null);
+                            require.using("I won't accept patients with a name that is missing or has wrong format.", iou.getName() != null);
+                            require.using("I won't accept patients with age that is negtive.", iou.getAge() <= 150);
+                            require.using("I won't accept patients with a wrong gender information.", iou.getGender().equals("Male") || iou.getGender().equals("Female") || iou.getGender().equals("Other"));
+                            require.using("I won't accept patients with a wrong blood group information.", iou.getBloodGroup().equals("A(positive)") || iou.getBloodGroup().equals("A(negative)")
+                                || iou.getBloodGroup().equals("B(positive)") || iou.getBloodGroup().equals("B(negative)")
+                                || iou.getBloodGroup().equals("AB(positive)") || iou.getBloodGroup().equals("AB(negative)")
+                                || iou.getBloodGroup().equals("O(positive)") || iou.getBloodGroup().equals("O(negative)"));
                         return null;
                     });
                 }

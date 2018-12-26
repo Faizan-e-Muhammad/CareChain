@@ -30,16 +30,16 @@ import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.OK;
 
 // This API is accessible from /api/example. All paths specified below are relative to it.
-@Path("example")
-public class ExampleApi {
+@Path("resources")
+public class Api {
     private final CordaRPCOps rpcOps;
     private final CordaX500Name myLegalName;
 
     private final List<String> serviceNames = ImmutableList.of("Notary");
 
-    static private final Logger logger = LoggerFactory.getLogger(ExampleApi.class);
+    static private final Logger logger = LoggerFactory.getLogger(Api.class);
 
-    public ExampleApi(CordaRPCOps rpcOps) {
+    public Api(CordaRPCOps rpcOps) {
         this.rpcOps = rpcOps;
         this.myLegalName = rpcOps.nodeInfo().getLegalIdentities().get(0).getName();
     }
