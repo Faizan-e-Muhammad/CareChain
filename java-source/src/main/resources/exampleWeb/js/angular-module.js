@@ -27,7 +27,7 @@ app.controller('DemoAppController', function($http, $location, $uibModal) {
     const demoApp = this;
 
     // We identify the node.
-    const apiBaseURL = "/api/example/";
+    const apiBaseURL = "/api/resources/";
     let peers = [];
 
     $http.get(apiBaseURL + "me").then((response) => demoApp.thisNode = response.data.me);
@@ -80,7 +80,9 @@ app.controller('ModalInstanceCtrl', function ($http, $location, $uibModalInstanc
 
             $uibModalInstance.close();
 
-            const createIOUEndpoint = `${apiBaseURL}create-iou?partyName=${modalInstance.form.counterparty}&iouValue=${modalInstance.form.value}`;
+
+            const createIOUEndpoint = `${apiBaseURL}create-iou?partyName=${modalInstance.form.counterparty}&iouName=${modalInstance.form.name}&iouAge=${modalInstance.form.age}&iouGender=${modalInstance.form.gender}&iouHeight=${modalInstance.form.height}&iouWeight=${modalInstance.form.weight}&iouBloodGroup=${modalInstance.form.bloodGroup}&iouDiagnosis=${modalInstance.form.diagnosis}&iouMedicine=${modalInstance.form.medicine}`;
+
 
             // Create PO and handle success / fail responses.
             $http.put(createIOUEndpoint).then(
@@ -113,7 +115,11 @@ app.controller('ModalInstanceCtrl', function ($http, $location, $uibModalInstanc
 
     // Validate the IOU.
     function invalidFormInput() {
-        return isNaN(modalInstance.form.value) || (modalInstance.form.counterparty === undefined);
+        return (modalInstance.form.medicine == null) || (modalInstance.form.diagnosis == null) ||
+                (modalInstance.form.bloodGroup == null) || isNaN(modalInstance.form.weight) ||
+                isNaN(modalInstance.form.height) || (modalInstance.form.gender == null) ||
+                 isNaN(modalInstance.form.age) || (modalInstance.form.name == null) ||
+                  (modalInstance.form.counterparty === undefined);
     }
 });
 
@@ -121,4 +127,53 @@ app.controller('ModalInstanceCtrl', function ($http, $location, $uibModalInstanc
 app.controller('messageCtrl', function ($uibModalInstance, message) {
     const modalInstanceTwo = this;
     modalInstanceTwo.message = message.data;
+});
+
+
+
+
+/**
+ * Filters out all duplicate items from an array by checking the specified key
+ * @param [key] {string} the name of the attribute of each object to compare for uniqueness
+ if the key is empty, the entire object will be compared
+ if the key === false then no filtering will be performed
+ * @return {array}
+ */
+app.filter('unique', function () {
+
+  return function (items, filterOn) {
+
+    if (filterOn === false) {
+      return items;
+    }
+
+    if ((filterOn || angular.isUndefined(filterOn)) && angular.isArray(items)) {
+      var hashCheck = {}, newItems = [];
+
+      var extractValueToCompare = function (item) {
+        if (angular.isObject(item) && angular.isString(filterOn)) {
+          return item[filterOn];
+        } else {
+          return item;
+        }
+      };
+
+      angular.forEach(items, function (item) {
+        var valueToCheck, isDuplicate = false;
+
+        for (var i = 0; i < newItems.length; i++) {
+          if (angular.equals(extractValueToCompare(newItems[i]), extractValueToCompare(item))) {
+            isDuplicate = true;
+            break;
+          }
+        }
+        if (!isDuplicate) {
+          newItems.push(item);
+        }
+
+      });
+      items = newItems;
+    }
+    return items;
+  };
 });

@@ -20,38 +20,73 @@ public class IOUSchemaV1 extends MappedSchema {
     @Entity
     @Table(name = "iou_states")
     public static class PersistentIOU extends PersistentState {
-        @Column(name = "lender") private final String lender;
-        @Column(name = "borrower") private final String borrower;
-        @Column(name = "value") private final int value;
+        @Column(name = "hospital") private final String hospital;
+        @Column(name = "patient") private final String patient;
+        @Column(name = "name") private final String name;
+        @Column(name = "age") private final int age;
+        @Column(name = "gender") private final String gender;
+        @Column(name = "height") private final int height;
+        @Column(name = "weight") private final int weight;
+        @Column(name = "bloodGroup") private final String bloodGroup;
+        @Column(name = "diagnosis") private final String diagnosis;
+        @Column(name = "medicine") private final String medicine;
         @Column(name = "linear_id") private final UUID linearId;
 
 
-        public PersistentIOU(String lender, String borrower, int value, UUID linearId) {
-            this.lender = lender;
-            this.borrower = borrower;
-            this.value = value;
+        public PersistentIOU(String hospital, String patient, String name, int age, String gender, int height, int weight, String bloodGroup, String diagnosis, String medicine, UUID linearId) {
+            this.hospital = hospital;
+            this.patient = patient;
+            this.name = name;
+            this.age = age;
+            this.gender = gender;
+            this.height = height;
+            this.weight = weight;
+            this.bloodGroup = bloodGroup;
+            this.diagnosis = diagnosis;
+            this.medicine = medicine;
             this.linearId = linearId;
         }
 
         // Default constructor required by hibernate.
         public PersistentIOU() {
-            this.lender = null;
-            this.borrower = null;
-            this.value = 0;
+            this.hospital = null;
+            this.patient = null;
+            this.name = null;
+            this.age = 0;
+            this.gender = null;
+            this.height = 0;
+            this.weight = 0;
+            this.bloodGroup = null;
+            this.diagnosis = null;
+            this.medicine = null;
             this.linearId = null;
         }
 
-        public String getLender() {
-            return lender;
+        public String getHospital() {
+            return hospital;
         }
 
-        public String getBorrower() {
-            return borrower;
+        public String getPatient() {
+            return patient;
         }
 
-        public int getValue() {
-            return value;
+        public String getName() {
+            return name;
         }
+
+        public int getAge(){ return age; }
+
+        public String getGender() { return gender; }
+
+        public int getHeight() { return height; }
+
+        public int getWeight() { return weight; }
+
+        public String getBloodGroup() { return bloodGroup; }
+
+        public String getDiagnosis() { return diagnosis; }
+
+        public String getMedicine() { return medicine; }
 
         public UUID getId() {
             return linearId;

@@ -33,7 +33,7 @@ public class IOUFlowTests {
         b = network.createPartyNode(null);
         // For real nodes this happens automatically, but we have to manually register the flow for tests.
         for (StartedMockNode node : ImmutableList.of(a, b)) {
-            node.registerInitiatedFlow(ExampleFlow.Acceptor.class);
+            node.registerInitiatedFlow(IssueFlow.Acceptor.class);
         }
         network.runNetwork();
     }
@@ -48,19 +48,19 @@ public class IOUFlowTests {
 
     @Test
     public void flowRejectsInvalidIOUs() throws Exception {
-        // The IOUContract specifies that IOUs cannot have negative values.
-        ExampleFlow.Initiator flow = new ExampleFlow.Initiator(-1, b.getInfo().getLegalIdentities().get(0));
+        // The IOUContract specifies that IOUs cannot have null values.
+        IssueFlow.Initiator flow = new IssueFlow.Initiator(null, b.getInfo().getLegalIdentities().get(0));
         CordaFuture<SignedTransaction> future = a.startFlow(flow);
         network.runNetwork();
 
-        // The IOUContract specifies that IOUs cannot have negative values.
+        // The IOUContract specifies that IOUs cannot have null values.
         exception.expectCause(instanceOf(TransactionVerificationException.class));
         future.get();
     }
 
     @Test
     public void signedTransactionReturnedByTheFlowIsSignedByTheInitiator() throws Exception {
-        ExampleFlow.Initiator flow = new ExampleFlow.Initiator(1, b.getInfo().getLegalIdentities().get(0));
+        IssueFlow.Initiator flow = new IssueFlow.Initiator("F", b.getInfo().getLegalIdentities().get(0));
         CordaFuture<SignedTransaction> future = a.startFlow(flow);
         network.runNetwork();
 
@@ -70,7 +70,7 @@ public class IOUFlowTests {
 
     @Test
     public void signedTransactionReturnedByTheFlowIsSignedByTheAcceptor() throws Exception {
-        ExampleFlow.Initiator flow = new ExampleFlow.Initiator(1, b.getInfo().getLegalIdentities().get(0));
+        IssueFlow.Initiator flow = new IssueFlow.Initiator("F", b.getInfo().getLegalIdentities().get(0));
         CordaFuture<SignedTransaction> future = a.startFlow(flow);
         network.runNetwork();
 
@@ -80,7 +80,7 @@ public class IOUFlowTests {
 
     @Test
     public void flowRecordsATransactionInBothPartiesTransactionStorages() throws Exception {
-        ExampleFlow.Initiator flow = new ExampleFlow.Initiator(1, b.getInfo().getLegalIdentities().get(0));
+        IssueFlow.Initiator flow = new IssueFlow.Initiator("F", b.getInfo().getLegalIdentities().get(0));
         CordaFuture<SignedTransaction> future = a.startFlow(flow);
         network.runNetwork();
         SignedTransaction signedTx = future.get();
@@ -93,8 +93,9 @@ public class IOUFlowTests {
 
     @Test
     public void recordedTransactionHasNoInputsAndASingleOutputTheInputIOU() throws Exception {
-        Integer iouValue = 1;
-        ExampleFlow.Initiator flow = new ExampleFlow.Initiator(iouValue, b.getInfo().getLegalIdentities().get(0));
+        //Integer iouValue = 1;
+        String iouName = "F";
+        IssueFlow.Initiator flow = new IssueFlow.Initiator(iouName, b.getInfo().getLegalIdentities().get(0));
         CordaFuture<SignedTransaction> future = a.startFlow(flow);
         network.runNetwork();
         SignedTransaction signedTx = future.get();
@@ -106,16 +107,17 @@ public class IOUFlowTests {
             assert (txOutputs.size() == 1);
 
             IOUState recordedState = (IOUState) txOutputs.get(0).getData();
-            assertEquals(recordedState.getValue(), iouValue);
-            assertEquals(recordedState.getLender(), a.getInfo().getLegalIdentities().get(0));
-            assertEquals(recordedState.getBorrower(), b.getInfo().getLegalIdentities().get(0));
+            assertEquals(recordedState.getName(), iouName);
+            assertEquals(recordedState.getHospital(), a.getInfo().getLegalIdentities().get(0));
+            assertEquals(recordedState.getPatient(), b.getInfo().getLegalIdentities().get(0));
         }
     }
 
     @Test
     public void flowRecordsTheCorrectIOUInBothPartiesVaults() throws Exception {
-        Integer iouValue = 1;
-        ExampleFlow.Initiator flow = new ExampleFlow.Initiator(1, b.getInfo().getLegalIdentities().get(0));
+        //Integer iouValue = 1;
+        String iouName = "F";
+        IssueFlow.Initiator flow = new IssueFlow.Initiator(iouName, b.getInfo().getLegalIdentities().get(0));
         CordaFuture<SignedTransaction> future = a.startFlow(flow);
         network.runNetwork();
         future.get();
@@ -126,9 +128,9 @@ public class IOUFlowTests {
                 List<StateAndRef<IOUState>> ious = node.getServices().getVaultService().queryBy(IOUState.class).getStates();
                 assertEquals(1, ious.size());
                 IOUState recordedState = ious.get(0).getState().getData();
-                assertEquals(recordedState.getValue(), iouValue);
-                assertEquals(recordedState.getLender(), a.getInfo().getLegalIdentities().get(0));
-                assertEquals(recordedState.getBorrower(), b.getInfo().getLegalIdentities().get(0));
+                assertEquals(recordedState.getName(), iouName);
+                assertEquals(recordedState.getHospital(), a.getInfo().getLegalIdentities().get(0));
+                assertEquals(recordedState.getPatient(), b.getInfo().getLegalIdentities().get(0));
                 return null;
             });
         }
