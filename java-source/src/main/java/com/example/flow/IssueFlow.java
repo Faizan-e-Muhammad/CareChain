@@ -1,7 +1,7 @@
 package com.example.flow;
 
 import co.paralleluniverse.fibers.Suspendable;
-import com.example.contract.IOUContract;
+import com.example.contract.IssueContract;
 import com.example.state.IOUState;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -15,7 +15,7 @@ import net.corda.core.transactions.TransactionBuilder;
 import net.corda.core.utilities.ProgressTracker;
 import net.corda.core.utilities.ProgressTracker.Step;
 
-import static com.example.contract.IOUContract.IOU_CONTRACT_ID;
+import static com.example.contract.IssueContract.IOU_CONTRACT_ID;
 import static net.corda.core.contracts.ContractsDSL.requireThat;
 
 /**
@@ -34,7 +34,7 @@ public class ExampleFlow {
     @StartableByRPC
     public static class Initiator extends FlowLogic<SignedTransaction> {
 
-        private final int iouValue;
+        private final String iouName;
         private final Party otherParty;
 
         private final Step GENERATING_TRANSACTION = new Step("Generating transaction based on new IOU.");
@@ -64,8 +64,8 @@ public class ExampleFlow {
                 FINALISING_TRANSACTION
         );
 
-        public Initiator(int iouValue, Party otherParty) {
-            this.iouValue = iouValue;
+        public Initiator(String iouName, Party otherParty) {
+            this.iouName = iouName;
             this.otherParty = otherParty;
         }
 
@@ -87,9 +87,9 @@ public class ExampleFlow {
             progressTracker.setCurrentStep(GENERATING_TRANSACTION);
             // Generate an unsigned transaction.
             Party me = getOurIdentity();
-            IOUState iouState = new IOUState(iouValue, me, otherParty, new UniqueIdentifier());
-            final Command<IOUContract.Commands.Create> txCommand = new Command<>(
-                    new IOUContract.Commands.Create(),
+            IOUState iouState = new IOUState(iouName, me, otherParty, new UniqueIdentifier());
+            final Command<IssueContract.Commands.Create> txCommand = new Command<>(
+                    new IssueContract.Commands.Create(),
                     ImmutableList.of(iouState.getLender().getOwningKey(), iouState.getBorrower().getOwningKey()));
             final TransactionBuilder txBuilder = new TransactionBuilder(notary)
                     .addOutputState(iouState, IOU_CONTRACT_ID)
@@ -142,7 +142,7 @@ public class ExampleFlow {
                         ContractState output = stx.getTx().getOutputs().get(0).getData();
                         require.using("This must be an IOU transaction.", output instanceof IOUState);
                         IOUState iou = (IOUState) output;
-                        require.using("I won't accept IOUs with a value over 100.", iou.getValue() <= 100);
+                        require.using("I won't accept IOUs with a name that is missing or has wrong format.", iou.getName() != null);
                         return null;
                     });
                 }

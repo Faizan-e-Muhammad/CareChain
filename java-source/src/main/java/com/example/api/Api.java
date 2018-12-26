@@ -1,6 +1,6 @@
 package com.example.api;
 
-import com.example.flow.ExampleFlow;
+import com.example.flow.IssueFlow;
 import com.example.schema.IOUSchemaV1;
 import com.example.state.IOUState;
 import com.google.common.collect.ImmutableList;
@@ -83,7 +83,7 @@ public class ExampleApi {
     /**
      * Initiates a flow to agree an IOU between two parties.
      *
-     * Once the flow finishes it will have written the IOU to ledger. Both the lender and the borrower will be able to
+     * Once the flow finishes it will have written the IOU to ledger. Both the hospital and the patient will be able to
      * see it when calling /api/example/ious on their respective nodes.
      *
      * This end-point takes a Party name parameter as part of the path. If the serving node can't find the other party
@@ -93,9 +93,35 @@ public class ExampleApi {
      */
     @PUT
     @Path("create-iou")
-    public Response createIOU(@QueryParam("iouValue") int iouValue, @QueryParam("partyName") CordaX500Name partyName) throws InterruptedException, ExecutionException {
-        if (iouValue <= 0) {
-            return Response.status(BAD_REQUEST).entity("Query parameter 'iouValue' must be non-negative.\n").build();
+    public Response createIOU(@QueryParam("iouName") String iouName, @QueryParam("iouAge") int iouAge,
+                              @QueryParam("iouGender") String iouGender, @QueryParam("iouHeight") int iouHeight,
+                              @QueryParam("iouWeight") int iouWeight, @QueryParam("iouBloodGroup") String iouBloodGroup,
+                              @QueryParam("iouDiagnosis") String iouDiagnosis, @QueryParam("iouMedicine") String iouMedicine,
+                              @QueryParam("partyName") CordaX500Name partyName) throws InterruptedException, ExecutionException {
+
+        if (iouName == null) {
+            return Response.status(BAD_REQUEST).entity("Query parameter 'iouName' missing or has wrong format.\n").build();
+        }
+        if (iouAge <= 0) {
+            return Response.status(BAD_REQUEST).entity("Query parameter 'iouAge' is negative.\n").build();
+        }
+        if (iouGender == null) {
+            return Response.status(BAD_REQUEST).entity("Query parameter 'iouGender' missing or has wrong format.\n").build();
+        }
+        if (iouHeight <= 0) {
+            return Response.status(BAD_REQUEST).entity("Query parameter 'iouHeight' is negative.\n").build();
+        }
+        if (iouWeight <= 0) {
+            return Response.status(BAD_REQUEST).entity("Query parameter 'iouWeight' is negative.\n").build();
+        }
+        if (iouBloodGroup == null) {
+            return Response.status(BAD_REQUEST).entity("Query parameter 'iouBloodGroup' missing or has wrong format.\n").build();
+        }
+        if (iouDiagnosis == null) {
+            return Response.status(BAD_REQUEST).entity("Query parameter 'iouDiagnosis' missing or has wrong format.\n").build();
+        }
+        if (iouMedicine == null) {
+            return Response.status(BAD_REQUEST).entity("Query parameter 'iouMedicine' missing or has wrong format.\n").build();
         }
         if (partyName == null) {
             return Response.status(BAD_REQUEST).entity("Query parameter 'partyName' missing or has wrong format.\n").build();
@@ -108,7 +134,7 @@ public class ExampleApi {
 
         try {
             final SignedTransaction signedTx = rpcOps
-                    .startTrackedFlowDynamic(ExampleFlow.Initiator.class, iouValue, otherParty)
+                    .startTrackedFlowDynamic(IssueFlow.Initiator.class, iouName, iouAge, iouGender, iouHeight, iouWeight, iouBloodGroup, iouDiagnosis, iouMedicine, otherParty)
                     .getReturnValue()
                     .get();
 
@@ -130,10 +156,10 @@ public class ExampleApi {
     @Produces(MediaType.APPLICATION_JSON)
     public Response getMyIOUs() throws NoSuchFieldException {
         QueryCriteria generalCriteria = new QueryCriteria.VaultQueryCriteria(Vault.StateStatus.ALL);
-        Field lender = IOUSchemaV1.PersistentIOU.class.getDeclaredField("lender");
-        CriteriaExpression lenderIndex = Builder.equal(lender, myLegalName.toString());
-        QueryCriteria lenderCriteria = new QueryCriteria.VaultCustomQueryCriteria(lenderIndex);
-        QueryCriteria criteria = generalCriteria.and(lenderCriteria);
+        Field hospital = IOUSchemaV1.PersistentIOU.class.getDeclaredField("hospital");
+        CriteriaExpression hospitalIndex = Builder.equal(hospital, myLegalName.toString());
+        QueryCriteria hospitalCriteria = new QueryCriteria.VaultCustomQueryCriteria(hospitalIndex);
+        QueryCriteria criteria = generalCriteria.and(hospitalCriteria);
         List<StateAndRef<IOUState>> results = rpcOps.vaultQueryByCriteria(criteria,IOUState.class).getStates();
         return Response.status(OK).entity(results).build();
     }

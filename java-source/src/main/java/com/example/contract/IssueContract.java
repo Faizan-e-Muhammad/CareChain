@@ -24,8 +24,8 @@ import static net.corda.core.contracts.ContractsDSL.requireThat;
  *
  * All contracts must sub-class the [Contract] interface.
  */
-public class IOUContract implements Contract {
-    public static final String IOU_CONTRACT_ID = "com.example.contract.IOUContract";
+public class IssueContract implements Contract {
+    public static final String IOU_CONTRACT_ID = "com.example.contract.IssueContract";
 
     /**
      * The verify() function of all the states' contracts must not throw an exception for a transaction to be
@@ -46,9 +46,9 @@ public class IOUContract implements Contract {
             require.using("All of the participants must be signers.",
                     command.getSigners().containsAll(out.getParticipants().stream().map(AbstractParty::getOwningKey).collect(Collectors.toList())));
 
-            // IOU-specific constraints.
-            require.using("The IOU's value must be non-negative.",
-                    out.getValue() > 0);
+             //IOU-specific constraints.
+            require.using("The IOU's name must not be null.",
+                    out.getName() != null);
 
             return null;
         });
